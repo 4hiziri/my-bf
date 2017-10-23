@@ -3,22 +3,22 @@ extern crate nom;
 
 use nom::{IResult, space, alpha};
 
-named!(parens, delimited!(char!('('), is_not!(")"), char!(')')));
 
-named!(test1(&[u8]) -> &[u8], tag!("Hello,"));
-named!(test2<&[u8], &[u8]>, tag!("Hello,"));
-named!(test3, tag!("Hello,"));
 
-fn test4(input: &[u8]) -> IResult<&[u8], &[u8]> {
-    tag!(input, "Hello,")
-}
+named!(point_inc, tag!(">"));
+named!(point_dec, tag!("<"));
+named!(inc, tag!("+"));
+named!(dec, tag!("-"));
+named!(output, tag!("."));
+named!(input, tag!(","));
 
-// test1~4 are the same functionally
+// Load all instruction at beginning?
+
 
 fn main() {
-    let sample = "Hello, world!\nHello, hello";
+    let mut pointer: u8 = 0;
+    let mut memory: [u8; 256] = [0; 256];
 
-    let tes: &[u8] = &[0; 4];
 
     match test4(sample.as_bytes()) {
         IResult::Done(i, o) => {
