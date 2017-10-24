@@ -3,24 +3,33 @@ extern crate nom;
 
 use nom::{IResult, space, alpha};
 
+enum Inst {
+    PInc,
+    PDec,
+    Inc,
+    Dec,
+    Put,
+    Get,
+    Begin,
+    End,
+}
 
+named!(
+    pinc,
+    alt!(tag!(">") | tag!("<") | tag!("+") | tag!("-") | tag!(".") | tag!(",") | tag!("[") | tag!("]"))
+);
 
-named!(point_inc, tag!(">"));
-named!(point_dec, tag!("<"));
-named!(inc, tag!("+"));
-named!(dec, tag!("-"));
-named!(output, tag!("."));
-named!(input, tag!(","));
+fn parse(input: &[u8]) -> (Inst, &[u8]) {}
 
 // Load all instruction at beginning?
 
-
 fn main() {
+    let sample = "++++++++++++++++++++++++++.";
     let mut pointer: u8 = 0;
     let mut memory: [u8; 256] = [0; 256];
 
 
-    match test4(sample.as_bytes()) {
+    match pinc(sample.as_bytes()) {
         IResult::Done(i, o) => {
             println!(
                 "{}, {}",
