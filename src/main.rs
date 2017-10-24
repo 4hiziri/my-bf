@@ -38,7 +38,7 @@ named!(
     alt!(tag!(">") | tag!("<") | tag!("+") | tag!("-") | tag!(".") | tag!(",") | tag!("[") | tag!("]"))
 );
 
-fn str2inst(symbol: &str) -> Inst {
+fn str_inst(symbol: &str) -> Inst {
     match symbol {
         ">" => Inst::PInc,
         "<" => Inst::PDec,
@@ -52,12 +52,18 @@ fn str2inst(symbol: &str) -> Inst {
     }
 }
 
-fn parse(input: &str) -> (Inst, &[u8]) {
+fn parse_symbol(input: &str) -> (Inst, &[u8]) {
     match parser(input.as_bytes()) {
         IResult::Done(i, o) => (Inst::End, o),
         _ => (Inst::End, &[]),
     }
 }
+
+// fn parse(input: &str) -> &Vec {
+//     let v = [];
+
+//     v
+// }
 
 // Load all instruction at beginning?
 
@@ -66,7 +72,7 @@ fn main() {
     let mut pointer: u8 = 0;
     let mut memory: [u8; 256] = [0; 256];
 
-    let (inst, rest) = parse(sample);
+    let (inst, rest) = parse_symbol(sample);
 
-    println!("{}", str2inst(std::str::from_utf8(rest).unwrap()));
+    println!("{}", str_inst(std::str::from_utf8(rest).unwrap()));
 }
