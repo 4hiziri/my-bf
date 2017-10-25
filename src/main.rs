@@ -1,8 +1,9 @@
 #[macro_use]
 extern crate nom;
 
-use nom::{IResult, space, alpha};
+use nom::IResult;
 
+#[derive(PartialEq, Eq)]
 enum Inst {
     PInc,
     PDec,
@@ -39,6 +40,8 @@ impl std::fmt::Debug for Inst {
     }
 }
 
+// TODO: extract token
+/// &str -> Inst
 fn from_str(symbol: &str) -> Inst {
     match symbol {
         ">" => Inst::PInc,
@@ -63,10 +66,12 @@ named!(
 );
 
 // TODO: if error occurs or invalid form is come, raise error
+// REF: https://qiita.com/tatsuya6502/items/cd41599291e2e5f38a4a#%E3%82%A8%E3%83%A9%E3%83%BC%E6%83%85%E5%A0%B1%E3%82%92%E6%94%B9%E5%96%84%E3%81%99%E3%82%8B
 fn parse_symbol(input: &[u8]) -> Option<(Inst, &[u8])> {
     match parser(input) {
         IResult::Done(rest, token) => Some((from_bytes(token), rest)),
-        _ => None,
+        IResult::Incomplete(_) => None,
+        IResult::Error(_) => panic!("Parse Error!"),
     }
 }
 
@@ -82,7 +87,22 @@ fn parse(input: &str) -> Vec<Inst> {
     v
 }
 
+struct Processor {
+    pointer: u8,
+    memory: [u8; 256],
+}
+
+impl Processor {
+    fn new() -> Processor {
+        Processor {
+            pointer: 0,
+            memory: [0; 256],
+        }
+    }
+}
+
 fn main() {
+    let machine = Processor::new();
     let sample: &str = "+++++++++.";
     let mut pointer: u8 = 0;
     let mut memory: [u8; 256] = [0; 256];
@@ -103,4 +123,27 @@ fn test_inst_string() {
     assert_eq!(Inst::Bgn.to_string(), "bgn");
     assert_eq!(Inst::End.to_string(), "end");
     assert_eq!(Inst::Nop.to_string(), "nop");
+}
+
+#[test]
+fn test_from_str() {
+    assert_eq!(from_str(">"), Inst::PInc);
+    assert_eq!(from_str("-"), Inst::Dec);
+    assert_eq!(from_str("Foo"), Inst::Nop);
+}
+
+#[test]
+fn test_parse() {
+    let input = "><<<<".as_bytes();
+    assert_eq!(
+        parse_symbol(input).unwrap(),
+        (Inst::PInc, "<<<<".as_bytes())
+    );
+}
+
+#[test]
+#[should_panic(expected = "Parse Error!")]
+fn test_parse_panic() {
+    let input = "test".as_bytes();
+    parse_symbol(input);
 }
