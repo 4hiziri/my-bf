@@ -4,6 +4,7 @@ extern crate nom;
 use nom::IResult;
 
 #[derive(PartialEq, Eq)]
+#[derive(Debug)]
 enum Inst {
     PInc,
     PDec,
@@ -31,12 +32,6 @@ impl std::fmt::Display for Inst {
         };
 
         write!(f, "{}", repr)
-    }
-}
-
-impl std::fmt::Debug for Inst {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
     }
 }
 
