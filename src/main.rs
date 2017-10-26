@@ -93,17 +93,60 @@ impl Processor {
             memory: [0; 256],
         }
     }
+
+    fn pinc(&mut self) {
+        self.pointer += 1;
+    }
+
+    fn pdec(&mut self) {
+        self.pointer -= 1;
+    }
+
+    fn inc(&mut self) {
+        self.memory[self.pointer as usize] += 1;
+    }
+
+    fn dec(&mut self) {
+        self.memory[self.pointer as usize] += 1;
+    }
+
+    fn put(&self) {
+        println!("{}", self.memory[self.pointer as usize] as char);
+    }
+
+    fn get(&mut self) {
+        // TODO: research how to get char in rust
+    }
+
+    fn nop(&self) {
+        // this means inst that do nothing
+    }
+
+    fn exec(&mut self, exec: &Vec<Inst>) {
+        use Inst::*;
+
+        for inst in exec.iter() {
+            match inst {
+                &PInc => self.pinc(),
+                &PDec => self.pdec(),
+                &Inc => self.inc(),
+                &Dec => self.dec(),
+                &Put => self.put(),
+                _ => self.nop(),
+            }
+        }
+    }
 }
 
 fn main() {
-    let machine = Processor::new();
-    let sample: &str = "+++++++++.";
-    let mut pointer: u8 = 0;
-    let mut memory: [u8; 256] = [0; 256];
+    let mut machine = Processor::new();
+    let sample: &str = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
 
     let v = parse(sample);
 
-    println!("{:?}", v);
+    println!("{:?}", &v);
+
+    machine.exec(&v);
 }
 
 #[test]
@@ -140,4 +183,25 @@ fn test_parse() {
 fn test_parse_panic() {
     let input = "test".as_bytes();
     parse_symbol(input);
+}
+
+#[test]
+fn test_machine_new() {
+    let machine = Processor::new();
+    assert_eq!(machine.pointer, 0);
+    // assert_eq!(machine.memory, [0; 256]); type check
+}
+
+#[test]
+fn test_machine_pinc() {
+    let mut m = Processor::new();
+    m.pinc();
+    assert_eq!(m.pointer, 1);
+}
+
+#[test]
+fn test_machine_inc() {
+    let mut m = Processor::new();
+    m.inc();
+    assert_eq!(m.memory[0], 1);
 }
