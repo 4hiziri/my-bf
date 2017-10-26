@@ -82,7 +82,8 @@ fn parse(input: &str) -> Vec<Inst> {
 }
 
 struct Processor {
-    sp: u8,
+    sp: usize,
+    ip: usize,
     memory: [u8; 256],
 }
 
@@ -90,53 +91,118 @@ impl Processor {
     fn new() -> Processor {
         Processor {
             sp: 0,
+            ip: 0,
             memory: [0; 256],
         }
     }
 
+    fn set_mem(&mut self, val: u8) {
+        self.memory[self.sp] = val;
+    }
+
+    fn get_mem(&self) -> u8 {
+        self.memory[self.sp]
+    }
+
     fn pinc(&mut self) {
         self.sp += 1;
+        self.ip += 1;
     }
 
     fn pdec(&mut self) {
         self.sp -= 1;
+        self.ip += 1;
     }
 
     fn inc(&mut self) {
-        self.memory[self.sp as usize] += 1;
+        let val = self.get_mem() + 1;
+        self.set_mem(val);
+        self.ip += 1;
     }
 
     fn dec(&mut self) {
-        self.memory[self.sp as usize] += 1;
+        let val = self.get_mem() - 1;
+        self.set_mem(val);
+        self.ip += 1;
     }
 
-    fn put(&self) {
-        println!("{}", self.memory[self.sp as usize] as char);
+    fn put(&mut self) {
+        print!("{}", self.get_mem() as char);
+        self.ip += 1;
     }
 
     fn get(&mut self) {
-        // TODO: research how to get char in rust
         use std::io::*;
-        let stdin = stdin();
-
-        // let s = stdin.bytes().take(1);
+        // ignore every error
+        self.set_mem(stdin().bytes().nth(0).unwrap().unwrap());
+        self.ip += 1;
     }
 
-    fn nop(&self) {
+    fn bgn(&mut self, exec: &Vec<Inst>) {
+        if self.get_mem() == 0 {
+            let len = exec.len();
+            self.ip += 1;
+
+            // TODO: need some error
+            while self.ip < len {
+                if exec[self.ip] == Inst::End {
+                    self.ip += 1;
+                    break;
+                } else {
+                    self.ip += 1;
+                }
+            }
+        } else {
+            self.ip += 1;
+        }
+    }
+
+    fn end(&mut self, exec: &Vec<Inst>) {
+        if self.get_mem() != 0 {
+            let mut nest_level = 0;
+            self.ip -= 1;
+
+            loop {
+                let inst = &exec[self.ip];
+                if inst == &Inst::Bgn {
+                    if nest_level == 0 {
+                        self.ip += 1;
+                        break;
+                    } else {
+                        nest_level -= 1;
+                    }
+                } else if inst == &Inst::End {
+                    nest_level += 1;
+                } else {
+                    self.ip -= 1;
+                }
+            }
+        } else {
+            self.ip += 1;
+        }
+    }
+
+    fn nop(&mut self) {
         // this means inst that do nothing
+        self.ip += 1;
     }
 
     fn exec(&mut self, exec: &Vec<Inst>) {
         use Inst::*;
 
-        for inst in exec.iter() {
-            match inst {
+        let len = exec.len();
+
+        while self.ip < len {
+            match &exec[self.ip] {
                 &PInc => self.pinc(),
                 &PDec => self.pdec(),
                 &Inc => self.inc(),
                 &Dec => self.dec(),
                 &Put => self.put(),
-                _ => self.nop(),
+                &Get => self.get(),
+                &Bgn => self.bgn(exec),
+                &End => self.end(exec),
+                &Nop => self.nop(),
             }
         }
     }
@@ -144,16 +210,12 @@ impl Processor {
 
 fn main() {
     let mut machine = Processor::new();
-    let sample: &str = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
+    let sample = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
+    let hello_world = "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.";
 
-    let v = parse(sample);
-    // println!("{:?}", &v);
-
-    // machine.exec(&v);
-    use std::io::*;
-    let stdin = stdin();
-    let Some(b) = stdin.bytes().nth(0);
-    println!("{}", b);
+    let v = parse(hello_world);
+    println!("{:?}", &v);
+    machine.exec(&v);
 }
 
 #[test]
