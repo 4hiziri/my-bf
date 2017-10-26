@@ -3,8 +3,7 @@ extern crate nom;
 
 use nom::IResult;
 
-#[derive(PartialEq, Eq)]
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 enum Inst {
     PInc,
     PDec,
