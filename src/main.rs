@@ -82,40 +82,44 @@ fn parse(input: &str) -> Vec<Inst> {
 }
 
 struct Processor {
-    pointer: u8,
+    sp: u8,
     memory: [u8; 256],
 }
 
 impl Processor {
     fn new() -> Processor {
         Processor {
-            pointer: 0,
+            sp: 0,
             memory: [0; 256],
         }
     }
 
     fn pinc(&mut self) {
-        self.pointer += 1;
+        self.sp += 1;
     }
 
     fn pdec(&mut self) {
-        self.pointer -= 1;
+        self.sp -= 1;
     }
 
     fn inc(&mut self) {
-        self.memory[self.pointer as usize] += 1;
+        self.memory[self.sp as usize] += 1;
     }
 
     fn dec(&mut self) {
-        self.memory[self.pointer as usize] += 1;
+        self.memory[self.sp as usize] += 1;
     }
 
     fn put(&self) {
-        println!("{}", self.memory[self.pointer as usize] as char);
+        println!("{}", self.memory[self.sp as usize] as char);
     }
 
     fn get(&mut self) {
         // TODO: research how to get char in rust
+        use std::io::*;
+        let stdin = stdin();
+
+        // let s = stdin.bytes().take(1);
     }
 
     fn nop(&self) {
@@ -143,9 +147,13 @@ fn main() {
     let sample: &str = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
 
     let v = parse(sample);
-    println!("{:?}", &v);
+    // println!("{:?}", &v);
 
-    machine.exec(&v);
+    // machine.exec(&v);
+    use std::io::*;
+    let stdin = stdin();
+    let Some(b) = stdin.bytes().nth(0);
+    println!("{}", b);
 }
 
 #[test]
@@ -187,7 +195,7 @@ fn test_parse_panic() {
 #[test]
 fn test_machine_new() {
     let machine = Processor::new();
-    assert_eq!(machine.pointer, 0);
+    assert_eq!(machine.sp, 0);
     // assert_eq!(machine.memory, [0; 256]); type check
 }
 
@@ -195,7 +203,7 @@ fn test_machine_new() {
 fn test_machine_pinc() {
     let mut m = Processor::new();
     m.pinc();
-    assert_eq!(m.pointer, 1);
+    assert_eq!(m.sp, 1);
 }
 
 #[test]
