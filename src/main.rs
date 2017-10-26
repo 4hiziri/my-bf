@@ -140,10 +140,9 @@ impl Processor {
 
 fn main() {
     let mut machine = Processor::new();
-    let sample: &str = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
+    let sample: &str = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
 
     let v = parse(sample);
-
     println!("{:?}", &v);
 
     machine.exec(&v);
