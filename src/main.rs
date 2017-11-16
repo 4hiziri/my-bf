@@ -56,7 +56,11 @@ fn from_bytes(symbol: &[u8]) -> Inst {
 
 named!(
     parser,
-    alt!(tag!(">") | tag!("<") | tag!("+") | tag!("-") | tag!(".") | tag!(",") | tag!("[") | tag!("]"))
+    ws!(alt!(
+        tag!(">") | tag!("<") | tag!("+") | tag!("-") | tag!(".") | tag!(",") | tag!("[") |
+            tag!("]") |
+            map!(nom::alphanumeric, |x| -> &[u8] { b"_" })
+    ))
 );
 
 // TODO: if error occurs or invalid form is come, raise error
@@ -210,12 +214,9 @@ impl Processor {
 
 fn main() {
     let mut machine = Processor::new();
-    let sample = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.";
     let hello_world = "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.";
 
-    let v = parse(hello_world);
-    println!("{:?}", &v);
-    machine.exec(&v);
+    machine.exec(&parse(hello_world));
 }
 
 #[test]
