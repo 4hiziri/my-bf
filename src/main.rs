@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate nom;
 
-use nom::IResult;
-
 #[derive(PartialEq, Eq, Debug)]
 enum Inst {
     PInc,
@@ -36,53 +34,46 @@ impl std::fmt::Display for Inst {
 
 // TODO: extract token
 /// &str -> Inst
-fn from_str(symbol: &str) -> Inst {
-    match symbol {
-        ">" => Inst::PInc,
-        "<" => Inst::PDec,
-        "+" => Inst::Inc,
-        "-" => Inst::Dec,
-        "." => Inst::Put,
-        "," => Inst::Get,
-        "[" => Inst::Bgn,
-        "]" => Inst::End,
-        _ => Inst::Nop,
+impl Inst {
+    fn from_str(symbol: &str) -> Self {
+        match symbol {
+            ">" => Inst::PInc,
+            "<" => Inst::PDec,
+            "+" => Inst::Inc,
+            "-" => Inst::Dec,
+            "." => Inst::Put,
+            "," => Inst::Get,
+            "[" => Inst::Bgn,
+            "]" => Inst::End,
+            _ => Inst::Nop,
+        }
+    }
+
+    fn from_bytes(symbol: &[u8]) -> Self {
+        Inst::from_str(std::str::from_utf8(symbol).unwrap())
     }
 }
 
-fn from_bytes(symbol: &[u8]) -> Inst {
-    from_str(std::str::from_utf8(symbol).unwrap())
-}
+
 
 named!(
-    parser,
-    ws!(alt!(
+    parser<&[u8], Vec<&[u8]>>,
+    many0!(ws!(alt!(
         tag!(">") | tag!("<") | tag!("+") | tag!("-") | tag!(".") | tag!(",") | tag!("[") |
             tag!("]") |
-            map!(nom::alphanumeric, |x| -> &[u8] { b"_" })
-    ))
+            map!(nom::anychar, |x| -> &[u8] { b"_" })
+    )))
 );
 
-// TODO: if error occurs or invalid form is come, raise error
-// REF: https://qiita.com/tatsuya6502/items/cd41599291e2e5f38a4a#%E3%82%A8%E3%83%A9%E3%83%BC%E6%83%85%E5%A0%B1%E3%82%92%E6%94%B9%E5%96%84%E3%81%99%E3%82%8B
-fn parse_symbol(input: &[u8]) -> Option<(Inst, &[u8])> {
-    match parser(input) {
-        IResult::Done(rest, token) => Some((from_bytes(token), rest)),
-        IResult::Incomplete(_) => None,
-        IResult::Error(_) => panic!("Parse Error!"),
-    }
-}
-
 fn parse(input: &str) -> Vec<Inst> {
-    let mut v = Vec::with_capacity(input.len());
-    let mut rest = input.as_bytes();
+    let input = input.as_bytes();
+    let (_, tokens) = parser(input).unwrap();
 
-    while let Some((inst, next)) = parse_symbol(rest) {
-        rest = next;
-        v.push(inst);
-    }
-
-    v
+    tokens
+        .into_iter()
+        .map(Inst::from_bytes)
+        .filter(|inst| inst != &Inst::Nop)
+        .collect()
 }
 
 struct Processor {
@@ -216,7 +207,9 @@ fn main() {
     let mut machine = Processor::new();
     let hello_world = "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.";
 
-    machine.exec(&parse(hello_world));
+    let tmp = parse(hello_world);
+
+    machine.exec(&tmp);
 }
 
 #[test]
@@ -234,25 +227,9 @@ fn test_inst_string() {
 
 #[test]
 fn test_from_str() {
-    assert_eq!(from_str(">"), Inst::PInc);
-    assert_eq!(from_str("-"), Inst::Dec);
-    assert_eq!(from_str("Foo"), Inst::Nop);
-}
-
-#[test]
-fn test_parse() {
-    let input = "><<<<".as_bytes();
-    assert_eq!(
-        parse_symbol(input).unwrap(),
-        (Inst::PInc, "<<<<".as_bytes())
-    );
-}
-
-#[test]
-#[should_panic(expected = "Parse Error!")]
-fn test_parse_panic() {
-    let input = "test".as_bytes();
-    parse_symbol(input);
+    assert_eq!(Inst::from_str(">"), Inst::PInc);
+    assert_eq!(Inst::from_str("-"), Inst::Dec);
+    assert_eq!(Inst::from_str("Foo"), Inst::Nop);
 }
 
 #[test]
